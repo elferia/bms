@@ -7,6 +7,7 @@ authors = ["elferia <a.t.qu.qu.qu@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.6"
 click = "^7.0"
+requests = "^2.22.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

@@ -22,6 +22,6 @@ setup(
     packages=['bms'],
     package_dir={"": "."},
     package_data={"bms": ["*.ini"]},
-    install_requires=['click==7.*,>=7.0.0'],
+    install_requires=['click==7.*,>=7.0.0', 'requests==2.*,>=2.22.0'],
     extras_require={"dev": ["autopep8==1.*,>=1.5.0", "pytest==5.*,>=5.2.0"]},
 )
