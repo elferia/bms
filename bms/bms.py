@@ -1,0 +1,2 @@
+def bms() -> None:
+    pass
