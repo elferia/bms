@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+from configparser import ConfigParser
+from io import TextIOWrapper
 import logging
 from typing import Iterator
 
 import click
+import pkg_resources
 
 
 _logger = logging.getLogger(__name__)
@@ -12,8 +15,19 @@ _logger.addHandler(_handler)
 
 
 @click.group()
-def bms() -> None:
+@click.option('--config', 'config_path')
+def bms(config_path: str) -> None:
     _handler.setLevel(logging.DEBUG)
+
+    config = ConfigParser()
+    if config_path:
+        raise NotImplementedError
+    else:
+        with pkg_resources.resource_stream(
+                __name__, 'resource.ini'
+        ) as f, TextIOWrapper(f) as config_file:
+            config.read_file(config_file)
+    _logger.debug('Mocha base URI: %s', config['mocha']['base_uri'])
 
 
 @bms.command()
