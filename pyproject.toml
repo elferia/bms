@@ -8,6 +8,7 @@ authors = ["elferia <a.t.qu.qu.qu@gmail.com>"]
 python = "^3.6"
 click = "^7.0"
 requests = "^2.22.0"
+beautifulsoup4 = "^4.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
