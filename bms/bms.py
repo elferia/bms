@@ -44,9 +44,15 @@ def bms(resource_path: str, verbosity: int) -> None:
 @click.argument('word')
 def search(word: str) -> None:
     _debug('searching with word "%s"', word)
-    result = MochaSearchEngine.search(word)
-    for bms in result:
-        click.echo(bms.text)
+    result = tuple(MochaSearchEngine.search(word))
+    if len(result) == 0:
+        return
+    index = 0
+    if len(result) > 1:
+        for i, bms in enumerate(result):
+            click.echo(f'"{bms.text}" [{i}]')
+        index = int(input('choose index: '))
+    _debug('selected: %i', index)
 
 
 @dataclass
@@ -77,7 +83,7 @@ class MochaSearchEngine(SearchEngine):
         _debug('searching Mocha with word "%s"', word)
         response = requests.get(
             cls.URI, params=ChainMap(cls._DEFAULT_PARAMS, dict(title=word)))
-        _debug('Mocha result HTML: %s', response.text)
+        cls._logger.debug('Mocha result HTML: %s', response.text)
         root = BeautifulSoup(response.text, features='html.parser')
         tables = root('table', class_='ranking')
         assert len(tables) == 1, f'table must be exactly 1, got {len(tables)}'
@@ -85,6 +91,9 @@ class MochaSearchEngine(SearchEngine):
         rows = table(_is_data_row)
         for row in rows:
             yield SearchResult(''.join(row('td')[1].strings))
+
+
+MochaSearchEngine._logger = logging.getLogger(MochaSearchEngine.__qualname__)
 
 
 def _is_data_row(element) -> bool:
