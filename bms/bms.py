@@ -4,10 +4,18 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from io import TextIOWrapper
 import logging
+from mimetypes import guess_type as guess_mimetype
+from os import listdir, rmdir, makedirs
+import os
+import os.path
+from os.path import basename
+import shutil
+from tempfile import mkdtemp
 from types import MappingProxyType
 from typing import Iterator
 from urllib.parse import urljoin
 import webbrowser
+from zipfile import ZipFile, is_zipfile
 
 from bs4 import BeautifulSoup
 import bs4
@@ -64,6 +72,42 @@ def download(word: str) -> None:
     result = results[index]
     _debug('detailed page uri: %s', result.detail_uri)
     result.download()
+
+
+@bms.command()
+@click.option('-d', 'destdir')
+@click.argument('path')
+def install(path: str, destdir: str) -> None:
+    config = ConfigParser()
+    config.read('bms.ini')
+    destpath = os.path.expanduser(config['bms']['path'])
+    if destdir:
+        destpath = os.path.join(destpath, destdir)
+    makedirs(destpath, exist_ok=True)
+
+    mime, _ = guess_mimetype(path)
+    if mime == 'application/zip':
+        if not is_zipfile(path):
+            raise NotImplementedError
+        with ZipFile(path) as z:
+            tempdir = mkdtemp(dir=destpath)
+            try:
+                z.extractall(tempdir)
+                contents = listdir(tempdir)
+                if len(contents) == 1:
+                    content_path = os.path.join(tempdir, contents[0])
+                    shutil.move(content_path, destpath)
+                    rmdir(tempdir)
+                else:
+                    filename = basename(path)
+                    filename_base = filename.rsplit('.', 1)[0]
+                    newpath = os.path.join(destpath, filename_base)
+                    os.replace(tempdir, newpath)
+            except:
+                shutil.rmtree(tempdir)
+                raise
+    else:
+        raise NotImplementedError
 
 
 @dataclass
