@@ -2,10 +2,11 @@ from abc import ABC, abstractmethod
 from collections import ChainMap
 from configparser import ConfigParser
 from dataclasses import dataclass
+from glob import escape as glob_escape, iglob
 from io import TextIOWrapper
 import logging
 from mimetypes import guess_type as guess_mimetype
-from os import listdir, rmdir, makedirs
+from os import listdir, makedirs, rmdir
 import os
 import os.path
 from os.path import basename
@@ -108,6 +109,19 @@ def install(path: str, destdir: str) -> None:
             raise
     else:
         raise NotImplementedError
+
+
+@bms.command()
+@click.argument('path')
+def amplify(path: str) -> None:
+    expanded_path = os.path.expanduser(path)
+    _amplify(expanded_path)
+
+
+def _amplify(path: str) -> None:
+    escaped_path = glob_escape(path)
+    pattern = os.path.join(escaped_path, '*.bm[sel]')
+    bms_iter = iglob(pattern)
 
 
 @dataclass
