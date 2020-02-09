@@ -89,23 +89,23 @@ def install(path: str, destdir: str) -> None:
     if mime == 'application/zip':
         if not is_zipfile(path):
             raise NotImplementedError
-        with ZipFile(path) as z:
-            tempdir = mkdtemp(dir=destpath)
-            try:
+        tempdir = mkdtemp(dir=destpath)
+        try:
+            with ZipFile(path) as z:
                 z.extractall(tempdir)
-                contents = listdir(tempdir)
-                if len(contents) == 1:
-                    content_path = os.path.join(tempdir, contents[0])
-                    shutil.move(content_path, destpath)
-                    rmdir(tempdir)
-                else:
-                    filename = basename(path)
-                    filename_base = filename.rsplit('.', 1)[0]
-                    newpath = os.path.join(destpath, filename_base)
-                    os.replace(tempdir, newpath)
-            except:
-                shutil.rmtree(tempdir)
-                raise
+            contents = listdir(tempdir)
+            if len(contents) == 1:
+                content_path = os.path.join(tempdir, contents[0])
+                shutil.move(content_path, destpath)
+                rmdir(tempdir)
+            else:
+                filename = basename(path)
+                filename_base = filename.rsplit('.', 1)[0]
+                newpath = os.path.join(destpath, filename_base)
+                os.replace(tempdir, newpath)
+        except:
+            shutil.rmtree(tempdir)
+            raise
     else:
         raise NotImplementedError
 
