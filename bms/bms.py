@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 import bs4
 import click
 import pkg_resources
+from prompt_toolkit import prompt
 import requests
 
 
@@ -52,7 +53,7 @@ def search(word: str) -> None:
     if len(results) > 1:
         for i, bms in enumerate(results):
             click.echo(f'"{bms.text}" [{i}]')
-        index = int(input('choose index: '))
+        index = int(prompt('choose index: ', default='0'))
     else:
         click.echo(f'"{results[0].text}"')
     _debug('selected: %i', index)
