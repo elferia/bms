@@ -6,6 +6,7 @@ from io import TextIOWrapper
 import logging
 from types import MappingProxyType
 from typing import Iterator
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 import bs4
@@ -44,20 +45,25 @@ def bms(resource_path: str, verbosity: int) -> None:
 @click.argument('word')
 def search(word: str) -> None:
     _debug('searching with word "%s"', word)
-    result = tuple(MochaSearchEngine.search(word))
-    if len(result) == 0:
+    results = tuple(MochaSearchEngine.search(word))
+    if len(results) == 0:
         return
     index = 0
-    if len(result) > 1:
-        for i, bms in enumerate(result):
+    if len(results) > 1:
+        for i, bms in enumerate(results):
             click.echo(f'"{bms.text}" [{i}]')
         index = int(input('choose index: '))
+    else:
+        click.echo(f'"{results[0].text}"')
     _debug('selected: %i', index)
+    result = results[index]
+    _debug('detailed page uri: %s', result.detail_uri)
 
 
 @dataclass
 class SearchResult:
     text: str
+    detail_uri: str
 
 
 class SearchEngine(ABC):
@@ -87,10 +93,15 @@ class MochaSearchEngine(SearchEngine):
         root = BeautifulSoup(response.text, features='html.parser')
         tables = root('table', class_='ranking')
         assert len(tables) == 1, f'table must be exactly 1, got {len(tables)}'
-        table = tables[0]
+        table = tables[0]  # type: bs4.Tag
         rows = table(_is_data_row)
+
+        row: bs4.Tag
         for row in rows:
-            yield SearchResult(''.join(row('td')[1].strings))
+            title_cell = row('td')[1]  # type: bs4.Tag
+            relative_uri = title_cell.a['href']  # type: str
+            absolute_uri = urljoin(cls.URI, relative_uri)
+            yield SearchResult(''.join(title_cell.strings), absolute_uri)
 
 
 MochaSearchEngine._logger = logging.getLogger(MochaSearchEngine.__qualname__)
