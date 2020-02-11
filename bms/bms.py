@@ -146,7 +146,7 @@ def _get_bms_objs(path: str) -> Iterator[BMS]:
     escaped_path = glob_escape(path)
     pattern = os.path.join(escaped_path, '*.bm[sel]')
     for bms_filepath in iglob(pattern):
-        with open(bms_filepath) as bms_file:
+        with open(bms_filepath, encoding='Shift_JIS') as bms_file:
             yield parse_bms(bms_file)
 
 
