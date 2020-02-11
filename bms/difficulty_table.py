@@ -13,13 +13,14 @@ class FromMappingMixin:
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]):
         field_names = map(attrgetter('name'), datafields(cls))
-        return cls(*(data[field_name] for field_name in field_names))
+        return cls(*(data.get(field_name) for field_name in field_names))
 
 
 @dataclass
 class DTableEntry(FromMappingMixin):
     md5: str
     title: str
+    appendurl: str
 
 
 @dataclass
@@ -42,6 +43,9 @@ def load(config: Mapping[str, Any]) -> Iterator[DifficultyTable]:
     beatoraja_path = config['path']
     beatoraja_path = expanduserpath(beatoraja_path)
     pattern = joinpath(escape_glob(beatoraja_path), 'table', '*.bmt')
+    exclude_name = frozenset(config.getlist('exclude', []))
     for path in iglob(pattern):
         with gzip.open(path, 'r') as f:
-            yield DifficultyTable.load(f)
+            table = DifficultyTable.load(f)
+            if table.name not in exclude_name:
+                yield table

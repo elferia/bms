@@ -3,7 +3,7 @@ from glob import escape as glob_escape, iglob
 from io import TextIOWrapper
 import logging
 from mimetypes import guess_type as guess_mimetype
-from operator import attrgetter
+from operator import attrgetter, methodcaller
 from os import listdir, makedirs, rmdir
 import os
 import os.path
@@ -48,7 +48,7 @@ def bms(ctx: click.Context, resource_path: str, verbosity: int) -> None:
     MochaSearchEngine.URI = config['mocha']['uri']
     _debug('Mocha URI: %s', MochaSearchEngine.URI)
 
-    user_config = ConfigParser()
+    user_config = ConfigParser(converters=dict(list=methodcaller('split')))
     user_config.read('bms.ini')
     ctx.obj = user_config
 
@@ -134,8 +134,12 @@ def _amplify(config: ConfigParser, path: str) -> None:
             _debug('bms found. md5=%s', entry.md5)
             if entry.md5 in hash_set:
                 _logger.info('%s is already installed', entry.title)
-            else:
-                pass
+            elif entry.appendurl:
+                yn = prompt(
+                    f'{entry.title} found in {dtable.name}. install? ',
+                    default='y')
+                if yn != 'y':
+                    continue
 
 
 def _get_bms_objs(path: str) -> Iterator[BMS]:
