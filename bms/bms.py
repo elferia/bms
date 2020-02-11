@@ -131,6 +131,7 @@ def _amplify(config: ConfigParser, path: str) -> None:
         _debug('difficulty table name: %s', dtable.name)
         entries = dtable.search(canonical_title)
         for entry in entries:
+            _debug('bms found. md5=%s', entry.md5)
             if entry.md5 in hash_set:
                 pass
             else:
