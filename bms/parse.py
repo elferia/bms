@@ -1,5 +1,6 @@
 from typing import TextIO
 from dataclasses import dataclass
+from hashlib import md5
 
 
 @dataclass
@@ -16,4 +17,5 @@ def parse(bms: TextIO) -> BMS:
             parsed_line = line.split(maxsplit=1)
             if len(parsed_line) == 2:
                 title = parsed_line[1]
-    return BMS(title, '')
+    bms.seek(0)
+    return BMS(title, md5(bms.buffer.read()).hexdigest())

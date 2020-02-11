@@ -19,6 +19,7 @@ class FromMappingMixin:
 @dataclass
 class DTableEntry(FromMappingMixin):
     md5: str
+    title: str
 
 
 @dataclass

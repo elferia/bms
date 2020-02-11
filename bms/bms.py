@@ -133,7 +133,7 @@ def _amplify(config: ConfigParser, path: str) -> None:
         for entry in entries:
             _debug('bms found. md5=%s', entry.md5)
             if entry.md5 in hash_set:
-                pass
+                _logger.info('%s is already installed', entry.title)
             else:
                 pass
 
