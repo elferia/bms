@@ -123,6 +123,8 @@ def _amplify(config: ConfigParser, path: str) -> None:
     bms_objs = tuple(_get_bms_objs(path))
     _debug('BMSes: %s', bms_objs)
     canonical_title = _get_longest_suffix(map(attrgetter('title'), bms_objs))
+    canonical_title = prompt('title: ', default=canonical_title)
+    _debug('title: %s', canonical_title)
     dt_iter = difficulty_table.load(config['beatoraja'])
     hash_set = frozenset(map(attrgetter('md5'), bms_objs))
     for dtable in dt_iter:
@@ -143,4 +145,13 @@ def _get_bms_objs(path: str) -> Iterator[BMS]:
 
 
 def _get_longest_suffix(words: Iterable[str]) -> str:
-    raise NotImplementedError
+    words_tuple = tuple(words)
+    if len(words_tuple) == 0:
+        return ''
+
+    suffix_length = 0
+    for chars in zip(*words_tuple):
+        if len(set(chars)) != 1:
+            break
+        suffix_length += 1
+    return words_tuple[0][:suffix_length]
