@@ -5,19 +5,17 @@ from logging import getLogger
 from types import MappingProxyType
 from typing import Iterator
 from urllib.parse import urljoin
-import webbrowser
 
 from bs4 import BeautifulSoup
 import bs4
-from prompt_toolkit import prompt
-import requests
+
+from bms.util import download_url, session
 
 
 _logger = getLogger(__package__)
 _debug = _logger.debug
 
-_session = requests.Session()
-_http_get = _session.get
+_http_get = session.get
 
 
 @dataclass
@@ -44,19 +42,9 @@ class MochaSearchResult(SearchResult):
         url_cell = url_row('td')[1]  # type: bs4.Tag
         url = url_cell.a['href']  # type: str
 
-        response = _session.head(url)
-        content_type = response.headers.get('Content-Type', 'text/html')
-        if content_type.casefold() == self._CASEFOLDED_TEXT_HTML:
-            yn = prompt(
-                'Song URL is for website. Open in browser? [y/n]: ',
-                default='y')
-            if yn == 'y':
-                webbrowser.open_new_tab(url)
-        else:
-            raise NotImplementedError
+        download_url(url)
 
     _CASEFOLDED_URL = 'url'.casefold()
-    _CASEFOLDED_TEXT_HTML = 'text/html'.casefold()
 
     @classmethod
     def _is_url_row(cls, element) -> bool:

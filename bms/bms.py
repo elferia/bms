@@ -20,6 +20,7 @@ from prompt_toolkit import prompt
 from bms import difficulty_table
 from bms.parse import BMS, parse as parse_bms
 from bms.search import MochaSearchEngine
+from bms.util import download_url
 
 
 _logger = logging.getLogger(__package__)
@@ -138,8 +139,8 @@ def _amplify(config: ConfigParser, path: str) -> None:
                 yn = prompt(
                     f'{entry.title} found in {dtable.name}. install? ',
                     default='y')
-                if yn != 'y':
-                    continue
+                if yn == 'y':
+                    download_url(entry.appendurl)
 
 
 def _get_bms_objs(path: str) -> Iterator[BMS]:
