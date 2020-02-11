@@ -123,8 +123,17 @@ def amplify(config: ConfigParser, path: str) -> None:
 def _amplify(config: ConfigParser, path: str) -> None:
     bms_objs = tuple(_get_bms_objs(path))
     _debug('BMSes: %s', bms_objs)
-    canonical_title = _get_longest_suffix(map(attrgetter('title'), bms_objs))
-    canonical_title = prompt('title: ', default=canonical_title)
+    title_list = list(map(attrgetter('title'), bms_objs))
+    canonical_title = _get_longest_suffix(title_list)
+    if canonical_title:
+        canonical_title = prompt('title: ', default=canonical_title)
+    else:
+        canonical_title = prompt(
+            '''failed to guess canonical title. please type yourself.
+BMSs\' title are:
+    ''' + '\n    '.join(title_list) +
+            '''
+type title: ''')
     _debug('title: %s', canonical_title)
     dt_iter = difficulty_table.load(config['beatoraja'])
     hash_set = frozenset(map(attrgetter('md5'), bms_objs))
