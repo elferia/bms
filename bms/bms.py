@@ -128,6 +128,7 @@ def _amplify(config: ConfigParser, path: str) -> None:
     dt_iter = difficulty_table.load(config['beatoraja'])
     hash_set = frozenset(map(attrgetter('md5'), bms_objs))
     for dtable in dt_iter:
+        _debug('difficulty table name: %s', dtable.name)
         entries = dtable.search(canonical_title)
         for entry in entries:
             if entry.md5 in hash_set:
