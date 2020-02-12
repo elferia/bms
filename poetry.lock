@@ -331,6 +331,14 @@ testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xm
 
 [[package]]
 category = "main"
+description = "RAR archive reader for Python"
+name = "rarfile"
+optional = false
+python-versions = "*"
+version = "3.1"
+
+[[package]]
+category = "main"
 description = "Python HTTP for Humans."
 name = "requests"
 optional = false
@@ -425,7 +433,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "47cfdeea73435aa6c6b24a8acf7f062b92f89c9793e4fe639d8e277e6d8e70bb"
+content-hash = "75f11da20480f126ce009e75074f104f693bcf082e56f53c97a20e93ce662a7d"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -544,6 +552,9 @@ pyparsing = [
 pytest = [
     {file = "pytest-5.3.5-py3-none-any.whl", hash = "sha256:ff615c761e25eb25df19edddc0b970302d2a9091fbce0e7213298d85fb61fef6"},
     {file = "pytest-5.3.5.tar.gz", hash = "sha256:0d5fe9189a148acc3c3eb2ac8e1ac0742cb7618c084f3d228baaec0c254b318d"},
+]
+rarfile = [
+    {file = "rarfile-3.1.tar.gz", hash = "sha256:dc1062176c529f417522af7da1291a35b85c8017464e665aabce048cfe2659b6"},
 ]
 requests = [
     {file = "requests-2.22.0-py2.py3-none-any.whl", hash = "sha256:9cf5292fcd0f598c671cfc1e0d7d1a7f13bb8085e9a590f48c010551dc6c4b31"},

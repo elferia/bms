@@ -16,6 +16,7 @@ from zipfile import ZipFile, is_zipfile
 import click
 import pkg_resources
 from prompt_toolkit import prompt
+from rarfile import RarFile, is_rarfile
 
 from bms import difficulty_table
 from bms.parse import BMS, parse as parse_bms
@@ -156,6 +157,8 @@ type title: ''')
                 content_type, f = d
                 if content_type == 'application/zip':
                     _extract_files(f, path)
+                elif content_type == 'application/x-rar-compressed':
+                    _extract_rar_files(f, path)
                 else:
                     raise NotImplementedError
 
@@ -166,6 +169,19 @@ def _extract_files(f: BinaryIO, path: str) -> None:
     with ZipFile(f) as z:
         for member in z.infolist():
             if member.is_dir():
+                continue
+            filename = basename(member.filename)
+            destpath = os.path.join(path, filename)
+            with z.open(member) as content, open(destpath, 'wb') as target:
+                shutil.copyfileobj(content, target)
+
+
+def _extract_rar_files(f: BinaryIO, path: str) -> None:
+    if not is_rarfile(f):
+        raise NotImplementedError
+    with RarFile(f) as z:
+        for member in z.infolist():
+            if member.isdir():
                 continue
             filename = basename(member.filename)
             destpath = os.path.join(path, filename)
