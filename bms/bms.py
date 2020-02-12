@@ -10,7 +10,7 @@ import os.path
 from os.path import basename
 import shutil
 from tempfile import mkdtemp
-from typing import Iterable, Iterator
+from typing import BinaryIO, Iterable, Iterator
 from zipfile import ZipFile, is_zipfile
 
 import click
@@ -148,8 +148,29 @@ type title: ''')
                 yn = prompt(
                     f'{entry.title} found in {dtable.name}. install? ',
                     default='y')
-                if yn == 'y':
-                    download_url(entry.appendurl)
+                if yn != 'y':
+                    continue
+                d = download_url(entry.appendurl)
+                if not d:
+                    continue
+                content_type, f = d
+                if content_type == 'application/zip':
+                    _extract_files(f, path)
+                else:
+                    raise NotImplementedError
+
+
+def _extract_files(f: BinaryIO, path: str) -> None:
+    if not is_zipfile(f):
+        raise NotImplementedError
+    with ZipFile(f) as z:
+        for member in z.infolist():
+            if member.is_dir():
+                continue
+            filename = basename(member.filename)
+            destpath = os.path.join(path, filename)
+            with z.open(member) as content, open(destpath, 'wb') as target:
+                shutil.copyfileobj(content, target)
 
 
 def _get_bms_objs(path: str) -> Iterator[BMS]:
