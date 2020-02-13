@@ -12,6 +12,7 @@ import shutil
 from tempfile import mkdtemp
 from typing import BinaryIO, Iterable, Iterator
 from zipfile import ZipFile, is_zipfile
+from urllib.parse import urlparse
 
 import click
 import pkg_resources
@@ -35,8 +36,7 @@ _debug = _logger.debug
 @click.option('-v', '--verbose', 'verbosity', count=True)
 @click.pass_context
 def bms(ctx: click.Context, resource_path: str, verbosity: int) -> None:
-    if verbosity > 0:
-        _logger.setLevel(logging.WARNING - verbosity * 10)
+    _logger.setLevel(logging.WARNING - (verbosity + 1) * 10)
 
     config = ConfigParser()
     if resource_path:
@@ -146,12 +146,14 @@ type title: ''')
             if entry.md5 in hash_set:
                 _logger.info('%s is already installed', entry.title)
             elif entry.appendurl:
+                url = entry.appendurl
                 yn = prompt(
                     f'{entry.title} found in {dtable.name}. install? ',
                     default='y')
                 if yn != 'y':
                     continue
-                d = download_url(entry.appendurl)
+
+                d = download_url(url)
                 if not d:
                     continue
                 content_type, f = d
@@ -159,8 +161,22 @@ type title: ''')
                     _extract_files(f, path)
                 elif content_type == 'application/x-rar-compressed':
                     _extract_rar_files(f, path)
+                elif content_type == 'application/octet-stream':
+                    yn = prompt(f'install {url}? [y/n]: ', default='y')
+                    if yn == 'y':
+                        _install_url(f, url, path)
                 else:
                     raise NotImplementedError
+
+
+def _install_url(f: BinaryIO, url: str, path: str) -> None:
+    p = urlparse(url)
+    paths = p.path.rsplit('/', 1)
+    filename = paths[1] if len(paths) > 1 else paths[0]
+    filepath = os.path.join(path, filename)
+    with open(filepath, 'xb') as g:
+        shutil.copyfileobj(f, g)
+    _logger.info('%s added', filepath)
 
 
 def _extract_files(f: BinaryIO, path: str) -> None:
@@ -170,23 +186,26 @@ def _extract_files(f: BinaryIO, path: str) -> None:
         for member in z.infolist():
             if member.is_dir():
                 continue
-            filename = basename(member.filename)
+            filename = member.filename.encode('cp437').decode('cp932')
+            filename = basename(filename)
             destpath = os.path.join(path, filename)
-            with z.open(member) as content, open(destpath, 'wb') as target:
+            with z.open(member) as content, open(destpath, 'xb') as target:
                 shutil.copyfileobj(content, target)
+            _logger.info('%s added', destpath)
 
 
 def _extract_rar_files(f: BinaryIO, path: str) -> None:
     if not is_rarfile(f):
         raise NotImplementedError
-    with RarFile(f) as z:
+    with RarFile(f, charset='cp932') as z:
         for member in z.infolist():
             if member.isdir():
                 continue
             filename = basename(member.filename)
             destpath = os.path.join(path, filename)
-            with z.open(member) as content, open(destpath, 'wb') as target:
+            with z.open(member) as content, open(destpath, 'xb') as target:
                 shutil.copyfileobj(content, target)
+            _logger.info('%s added', destpath)
 
 
 def _get_bms_objs(path: str) -> Iterator[BMS]:
