@@ -7,12 +7,12 @@ from operator import attrgetter, methodcaller
 from os import listdir, makedirs, rmdir
 import os
 import os.path
-from os.path import basename
+from os.path import basename, expanduser
 import shutil
 from tempfile import mkdtemp
 from typing import BinaryIO, Iterable, Iterator
-from zipfile import ZipFile, is_zipfile
 from urllib.parse import urlparse
+from zipfile import ZipFile, is_zipfile
 
 import click
 import pkg_resources
@@ -20,6 +20,7 @@ from prompt_toolkit import prompt
 from rarfile import RarFile, is_rarfile
 
 from bms import difficulty_table
+from bms import songdata
 from bms.parse import BMS, parse as parse_bms
 from bms.search import MochaSearchEngine
 from bms.util import download_url
@@ -122,9 +123,9 @@ def amplify(config: ConfigParser, path: str) -> None:
 
 
 def _amplify(config: ConfigParser, path: str) -> None:
-    bms_objs = tuple(_get_bms_objs(path))
-    _debug('BMSes: %s', bms_objs)
+    bms_objs = _get_bms_objs(path)
     title_list = list(map(attrgetter('title'), bms_objs))
+    _debug('BMSes: %s', title_list)
     canonical_title = _get_longest_suffix(title_list)
     if canonical_title:
         canonical_title = prompt('title: ', default=canonical_title)
@@ -137,36 +138,39 @@ BMSs\' title are:
 type title: ''')
     _debug('title: %s', canonical_title)
     dt_iter = difficulty_table.load(config['beatoraja'])
-    hash_set = frozenset(map(attrgetter('md5'), bms_objs))
+    beatoraja_path = expanduser(config['beatoraja']['path'])
+    songdata.connect(beatoraja_path)
     for dtable in dt_iter:
         _debug('difficulty table name: %s', dtable.name)
         entries = dtable.search(canonical_title)
         for entry in entries:
             _debug('bms found. md5=%s', entry.md5)
-            if entry.md5 in hash_set:
+            if songdata.exists(entry.md5):
                 _logger.info('%s is already installed', entry.title)
-            elif entry.appendurl:
-                url = entry.appendurl
-                yn = prompt(
-                    f'{entry.title} found in {dtable.name}. install? ',
-                    default='y')
-                if yn != 'y':
-                    continue
+                continue
+            if not entry.appendurl:
+                continue
+            url = entry.appendurl
+            yn = prompt(
+                f'{entry.title} found in {dtable.name}. install? ',
+                default='y')
+            if yn != 'y':
+                continue
 
-                d = download_url(url)
-                if not d:
-                    continue
-                content_type, f = d
-                if content_type == 'application/zip':
-                    _extract_files(f, path)
-                elif content_type == 'application/x-rar-compressed':
-                    _extract_rar_files(f, path)
-                elif content_type == 'application/octet-stream':
-                    yn = prompt(f'install {url}? [y/n]: ', default='y')
-                    if yn == 'y':
-                        _install_url(f, url, path)
-                else:
-                    raise NotImplementedError
+            d = download_url(url)
+            if not d:
+                continue
+            content_type, f = d
+            if content_type == 'application/zip':
+                _extract_files(f, path)
+            elif content_type == 'application/x-rar-compressed':
+                _extract_rar_files(f, path)
+            elif content_type == 'application/octet-stream':
+                yn = prompt(f'install {url}? [y/n]: ', default='y')
+                if yn == 'y':
+                    _install_url(f, url, path)
+            else:
+                raise NotImplementedError
 
 
 def _install_url(f: BinaryIO, url: str, path: str) -> None:
