@@ -157,6 +157,7 @@ type title: ''')
             if yn != 'y':
                 continue
 
+            _debug('BMS URL: %s', url)
             d = download_url(url)
             if not d:
                 continue
@@ -165,7 +166,7 @@ type title: ''')
                 _extract_files(f, path)
             elif content_type == 'application/x-rar-compressed':
                 _extract_rar_files(f, path)
-            elif content_type == 'application/octet-stream':
+            elif content_type in {'application/octet-stream', 'text/plain'}:
                 yn = prompt(f'install {url}? [y/n]: ', default='y')
                 if yn == 'y':
                     _install_url(f, url, path)
